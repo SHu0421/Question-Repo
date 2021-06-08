@@ -5,8 +5,8 @@ import torchvision
 import torchvision.transforms as transforms
 import torch
 import torch.nn as nn
-from tools.models import *
-from tools.utils import *
+from models import *
+from util import *
 import time
 from torchvision import transforms as tfs
 import numpy as np
