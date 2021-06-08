@@ -73,8 +73,6 @@ num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 args.distributed = num_gpus > 1
 
 
-
-
 if args.distributed:
     torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend="nccl", init_method="env://")
@@ -117,9 +115,8 @@ def evaluteTop5(net, loader, criterion):
         with torch.no_grad():
             logits = net(x)
             maxk = max((1, 5))
-            y_resize = y.view(-1, 1)  ###[128,1]
+            y_resize = y.view(-1, 1) 
             _, pred = logits.topk(maxk, 1, True, True)
-            ####pred是[128,5] 下标
             correct += torch.eq(pred, y_resize).sum().float().item()
     return correct / total
 
@@ -136,7 +133,7 @@ def test(net, loader, criterion, validation):
         top1 = evaluteTop1(net, loader, criterion)
         top5 = evaluteTop5(net, loader, criterion)
         if args.local_rank==0:
-            logger.info("-------- test ---------")
+            logger.info("---------- test -----------")
             logger.info("top1:%.4f   top5:%.4f" % (top1, top5))
     return top1, top5
 
@@ -165,7 +162,7 @@ def train(local_rank, distributed):
         net = ResNet18()
     elif args.model == 'vgg':
         net = VGG('VGG16')
-    # net = net.to(device)
+
     net.cuda()
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss(reduce=False).cuda()
@@ -219,11 +216,11 @@ def train(local_rank, distributed):
     testloader = torch.utils.data.DataLoader(testset,
                                              batch_size=args.batch_size,
                                              shuffle=False,
-                                             num_workers=args.workers)  # 单机验证
+                                             num_workers=args.workers)  
 
   
     for epoch in range(args.epochs):
-        train_sampler.set_epoch(epoch)  # 分布式训练需要一直刷新epoch
+        train_sampler.set_epoch(epoch) 
         net.train()
         for i, (inputs, labels) in enumerate(trainloader, 0):
 
@@ -251,9 +248,10 @@ def train(local_rank, distributed):
                          optimizer.state_dict()['param_groups'][0]['lr']))
 
     
-
+        # works fine
         # top1, top5, best_acc =  evaluate(net, testloader, criterion, best_acc)
         
+        # deadlock
         if args.local_rank == 0:
             top1, top5 = test(net, testloader, criterion, False)
             top1 = torch.tensor(top1).cuda(args.local_rank)
